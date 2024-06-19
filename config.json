@@ -1,0 +1,68 @@
+{
+    "frpc":{
+        "toml":"D:\\frp\\frp_0.52.3_windows_amd64\\frpc.toml",
+        "exe":"D:\\frp\\frp_0.52.3_windows_amd64\\frpc.exe",
+        "name":"frpc.exe",
+        "ip":"43.201.114.64"
+    },
+    "ssh":{
+        "pem":"$BASE_DIR\\asserts\\pem",
+        "commands":"$BASE_DIR\\asserts\\conf\\ssh_commands.json"
+    },
+    "main":{
+        "config_file":"$BASE_DIR\\config.json"
+    },
+    "icon":{
+        "img":"$BASE_DIR\\asserts\\icon\\kivy-icon-16.png"
+    },
+
+    "http":{
+        "host":"",
+        "port":6696,
+        "server_host":"18.167.165.119",
+        "url":"18.167.165.119:6696",
+        "local_url":"127.0.0.1:6696",
+        "directory":"C:\\Users\\98027\\Desktop"
+    },
+    "pet":{
+        
+        "text_label":{
+            "fg":"lightgreen"
+        },
+        "font":"Kunstler Script",
+        "font_size":12,
+        "window_width":400,
+        "window_height":250,
+        "hitokoto":"https://v1.hitokoto.cn",
+        "start_hitokoto":false,
+        "show_time":true,
+        "can_move":false,
+        "popup":true,
+        "ball":{
+            "default_timer":5,
+            "onLeftPress_timer":1
+        }
+    },
+    "mylinks":{
+        "ERP 测试":[
+            {"name":"PC erp","enable":true,"link":"https://tlixj2w51j.execute-api.us-east-2.amazonaws.com/main/login/pc","foreground":"green"},
+            {"name":"Phone erp","enable":true,"link":"https://21jc2ehx74.execute-api.us-east-2.amazonaws.com/main/login/phone","foreground":"green"},
+            {"name":"Omnidb","enable":true,"link":"http://18.217.1.109:8000/","foreground":"green"},
+            {"name":"后台","enable":true,"link":"https://vahk4mt8bl.execute-api.us-east-2.amazonaws.com/admin","foreground":"green"}
+
+            ],
+        "ERP 线上":[
+            {"name":"PC erp","enable":true,"link":"https://xnr1cpjlu2.execute-api.us-east-1.amazonaws.com","foreground":"red"},
+            {"name":"Phone erp","enable":true,"link":"https://miy2q3nio6.execute-api.us-east-1.amazonaws.com","foreground":"red"},
+            {"name":"Omnidb","enable":true,"link":"http://3.219.45.92:8000/workspace/ ","foreground":"red"},
+            {"name":"后台","enable":true,"link":"https://ysk0fwxvz0.execute-api.us-east-1.amazonaws.com/admin","foreground":"red"}
+            
+        ],
+        "AWS Bill":[
+            {"name":"测试","enable":true,"link":"https://g1hqcu238b.execute-api.us-east-2.amazonaws.com/main/login","foreground":"green"},
+            {"name":"测试Admin","enable":true,"link":"https://det2ykz5cg.execute-api.us-east-2.amazonaws.com/admin/","foreground":"green"},
+            {"name":"线上","enable":true,"link":"https://vp6xy5at6k.execute-api.us-east-1.amazonaws.com/main/login","foreground":"red"},
+            {"name":"线上Admin","enable":true,"link":"https://7e5bjbtu9b.execute-api.us-east-1.amazonaws.com/admin","foreground":"red"}
+        ]
+    }
+}

@@ -1,0 +1,6 @@
+{
+    "gemini": {
+        "pem": "$BASE_DIR\\asserts\\pem\\xxx.pem",
+        "host": "xxx@xx.xx.xx.xx"
+    }
+}
