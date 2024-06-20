@@ -1,12 +1,12 @@
 # -*- mode: python ; coding: utf-8 -*-
 
-icon_path = 'C:\\Users\\98027\\Desktop\\mykivy\\.kivy\\icon\\kivy-icon-64.ico'
+icon_path = 'C:\\Users\\98027\\Desktop\\desktop_utils\\asserts\\icon\\kivy-icon-64.ico'
 a = Analysis(
     ['run.py'],
     pathex=[],
     binaries=[],
     datas=[('kernel/', 'kernel'),('asserts/', 'asserts'),('apps/', 'apps'),("config.json","."),("utils.py","."),("singleton.py","."),("log.py",".")],
-    hiddenimports=["paramiko","tkinter","tkinter.filedialog","pystray","psutil","requests","queue","tkinter.font","tkinter.scrolledtext","PIL.Image","https","https.server"],
+    hiddenimports=["logging.handlers","paramiko","tkinter","tkinter.filedialog","pystray","psutil","requests","queue","tkinter.font","tkinter.scrolledtext","PIL.Image","https","https.server"],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],

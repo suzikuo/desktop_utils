@@ -38,6 +38,7 @@
         "show_time":true,
         "can_move":false,
         "popup":true,
+        "open_sticky":true,
         "ball":{
             "default_timer":5,
             "onLeftPress_timer":1

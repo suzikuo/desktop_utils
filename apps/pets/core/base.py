@@ -2,9 +2,10 @@ import datetime
 import os
 import time
 import tkinter
+from apps.pets.core.weight.common import ActionSticky
 
 
-from kernel.settings import BASE_DIR,IMG_DIR, config
+from kernel.settings import IMG_DIR, config
 
 from .hitokoto import Hitokoto
 
@@ -13,6 +14,7 @@ class BasePetMaster:
     """
     宠物的总类
     """
+
     def __init__(self):
         self.root = tkinter.Tk()  # create window
         self.root.withdraw()
@@ -115,9 +117,7 @@ class BasePetMaster:
         self.root.deiconify()
         self.root.mainloop()
 
-
     def quit(self, *args, **kwargs):
-        
         if self.action:
             self.action.quit()
 
@@ -145,6 +145,8 @@ class BaseAction:
 
         self.init_action_label()
 
+        self.init_sticky()
+
         self.animation = dict()
 
     def init_background(self):
@@ -161,8 +163,9 @@ class BaseAction:
 
     def init_action_label(self):
         # 宠物窗口
-        self.action_label = tkinter.Label(self.root, bd=0, bg="black")
-        self.action_label.place(x=0, y=60)  # 设置 action_label 的初始位置
+        self.action_label = ActionLabel(self.root, bd=0, bg="black")
+        # self.action_label = tkinter.Label(self.root, bd=0, bg="black")
+        self.action_label.place(x=20, y=20)
 
     def init_text_label(self):
         self.hitokoto = None
@@ -186,17 +189,19 @@ class BaseAction:
 
     def init_time_label(self):
         if config.pet.show_time:
+            place_x, place_y = 0, 0
+
             # 创建时间框
             self.time_label = TimeLabel(
                 self.root,
-                text="2024年5月24日10:00:50",
+                text="",
                 bd=0,
                 bg="black",
-                fg="grey",  # 修改为黑色文本
+                fg="lightgreen",  # 修改为黑色文本
                 font=("", 10),
                 highlightthickness=0,  # 去除边框
             )
-            self.time_label.place(x=0, y=0)  # 设置文本框的初始位置
+            self.time_label.place(x=place_x, y=place_y)
             self.time_label.start()
 
     def init_position(self):
@@ -212,6 +217,10 @@ class BaseAction:
         # change starting properties of the window
         self.curr_width = screen_width - self.pixels_from_right
         self.curr_height = screen_height - self.pixels_from_bottom
+
+    def init_sticky(self):
+        if config.pet.open_sticky:
+            self.sticky = ActionSticky(self)
 
     def onLeftClick(self, event):
         pass
@@ -234,10 +243,15 @@ class BaseAction:
     def update(self, i, curr_animation):
         pass
 
-    def geometry(self):
+    def geometry(self, x=None, y=None):
         """
         更新位置
         """
+        if x is not None and y is not None:
+            self.main.root.geometry(
+                "%dx%d+%d+%d" % (self.window_width, self.window_height, x, y)
+            )
+            return
         self.main.root.geometry(
             "%dx%d+%d+%d"
             % (self.window_width, self.window_height, self.curr_width, self.curr_height)
@@ -245,7 +259,7 @@ class BaseAction:
 
     def quit(self):
         pass
-    
+
     def change_image(self):
         """
         换肤
@@ -257,6 +271,7 @@ class BaseMenu(tkinter.Menu):
     """
     右键菜单
     """
+
     def __init__(self, main: BasePetMaster, *args, tearoff=False, **kwargs) -> None:
         super().__init__(main.root, *args, tearoff=tearoff, **kwargs)
         self.main = main
@@ -276,18 +291,43 @@ class BaseMenu(tkinter.Menu):
         pass
 
 
+class ActionLabel(tkinter.Label):
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.x, self.y = None, None
+        self.place
+
+    def reset_default(self):
+        self.place_configure(x=self.x, y=self.y)
+
+    def place(self, x, y, *args, **kwargs):
+        self.x = x if not self.x else self.x
+        self.y = y if not self.y else self.y
+        self.place_configure(x=x, y=y, *args, **kwargs)
+
+
 class TimeLabel(tkinter.Label):
     """
     时间类
     """
+
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
+        self.direction = 0  # 0横向，1纵向
 
     def start(self):
+        self._after()
+
+    def _after(self):
         self.update_time()
+        self.after(500, self._after)
 
-    def update_time(self):
-        t = datetime.datetime.now().strftime("%H:%M:%S %m/%d")
-        self.config(text=t)
+    def update_time(self) -> None:
+        t = datetime.datetime.now().strftime("%H:%M:%S")
+        if self.direction == 0:
+            self.config(text=t)
+        else:
+            self.config(text="\n".join(list(t)))
 
-        self.after(500, self.update_time)
+    def reset_default(self):
+        self.direction = 0

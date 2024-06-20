@@ -22,3 +22,5 @@ dist*
 EBWebView/
 asserts/pem/*
 asserts/conf/ssh_commands.json
+application.log
+error.log

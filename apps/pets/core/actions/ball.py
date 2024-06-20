@@ -22,7 +22,9 @@ class Ball(BaseAction):
 
         PetLogger.info("Pet APP:Init action success!")
 
-        self.timer = 10 if not config.pet.ball.default_timer else config.pet.ball.default_timer
+        self.timer = (
+            10 if not config.pet.ball.default_timer else config.pet.ball.default_timer
+        )
 
         self.running = False
 
@@ -40,18 +42,17 @@ class Ball(BaseAction):
 
         self.lens = len(self.photo_images)
 
-
     def update(self, i, curr_animation):
         if i == self.lens:
             i = 0
         self.action_label.configure(image=self.photo_images[i])
-        i +=1
+        i += 1
         if self.running:
             self.main.root.after(self.timer, self.update, i, curr_animation)
 
     def onLeftDrag(self, event):
-        x  = self.main.root.winfo_x() + event.x - self.offset_x
-        y  = self.main.root.winfo_y() + event.y - self.offset_y
+        x = self.main.root.winfo_x() + event.x - self.offset_x
+        y = self.main.root.winfo_y() + event.y - self.offset_y
         self.curr_width = x
         self.curr_height = y
         self.geometry()
@@ -67,6 +68,8 @@ class Ball(BaseAction):
 
     def onLeftPress(self, event):
         self.timer = config.pet.ball.onLeftPress_timer
+        self.offset_x = event.x
+        self.offset_y = event.y
 
     def onLeftRelease(self, event):
         self.timer = config.pet.ball.default_timer
@@ -74,6 +77,6 @@ class Ball(BaseAction):
     def quit(self):
         # sys.exit(0)
         return super().quit()
-    
+
     def onLeftDoubleClick(self, event):
         pass

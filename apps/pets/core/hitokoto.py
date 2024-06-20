@@ -25,6 +25,7 @@ class HitokotoThread(threading.Thread):
 
     def run(self):
         import requests
+
         while self.flag:
             ping = self.get_ping()
             if ping:

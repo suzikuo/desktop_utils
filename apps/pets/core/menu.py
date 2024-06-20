@@ -75,6 +75,7 @@ class ScpMenu(BaseMenu):
 
     def start_service(self):
         from apps.scp.myscp import Main
+
         Main().run()
 
 
@@ -124,7 +125,7 @@ class HTTPMenu(BaseMenu):
     def start_service(self, *args, **kwargs):
         try:
             MyHttpUtil().start_service(
-                (config.http.host, int(config.http.port)), config.http.directory,True
+                (config.http.host, int(config.http.port)), config.http.directory, True
             )
             TextPopup(self.root, self.show_time).add_text(
                 f"服务已启动:\n本地地址 {config.http.local_url}\n服务器地址 {config.http.url}"
@@ -199,6 +200,7 @@ class BiuPetMenu(PetMenu):
         self.unpost()
         self.action.close()
         self.after(2500, super().close)
+
 
 class BallMenu(PetMenu):
     def __init__(self, main: BasePetMaster, action, *args, **kwargs) -> None:

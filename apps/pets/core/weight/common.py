@@ -3,7 +3,7 @@ import time
 import tkinter as tk
 import tkinter.font as tkfont
 import tkinter.scrolledtext as tkscroll
-from log import setup_logger 
+from log import setup_logger
 
 
 class SimpleMarkdownText(tkscroll.ScrolledText):
@@ -170,8 +170,6 @@ class CustomTitleBar(tk.Frame):
             side=tk.RIGHT,
         )
 
-
-
     def close_window(self):
         if self.close_callback:
             self.close_callback()
@@ -193,6 +191,23 @@ class CustomTitleBar(tk.Frame):
         x = self.master.winfo_x() + event.x - self._drag_start_x
         y = self.master.winfo_y() + event.y - self._drag_start_y
         self.master.geometry(f"+{x}+{y}")
+
+
+class CommonFrame(tk.Frame):
+    def __init__(
+        self,
+        master,
+        bg,
+        cursor,
+        fill,
+        side,
+        width=None,
+        height=None,
+    ):
+        super().__init__(master, bg=bg, cursor=cursor, width=width, height=height)
+        self.fill = fill
+        self.side = side
+        self.pack(fill=fill, side=side)
 
 
 class ResizableFrame(tk.Frame):
@@ -254,171 +269,168 @@ class ResizableFrame(tk.Frame):
             self.start_resize(event)
 
 
-class StickyWindow:
+class ActionSticky:
     """
     贴边隐藏功能
     """
+
     def __init__(self, master):
         self.master = master
-        self.master.attributes("-topmost", True)
-        self.master.bind("<Enter>", self.show)
-        self.master.bind("<Leave>", self.leave)
+        self.master.action_label.bind("<Enter>", self.show)
+        self.master.action_label.bind("<Leave>", self.leave)
+
         # 窗口是否处于贴边隐藏状态
         self.is_sticky = False
+        
         self.old_size = None
 
-        self.show_nums = 0
-
         self.direction = None
+        # 贴边时，露出的大小
+        self.sticky_length = 2
 
+        self.min = 10
 
-    def show(self, event):
-        self.show_nums += 1
-        if self.show_nums == 1:
-            if self.old_size and self.is_sticky:
-                self.master.geometry(f"+{self.old_size[0]}+{self.old_size[1]}")
-                self.is_sticky = False
+        # 鼠标是否在组件内
+        self.mouse_is_in = False
 
-    def leave(self, event):
-
-        self.show_nums -= 1
-        if self.show_nums == 0:
-            # 检查窗口是否贴边
-            if self.is_sticky_to_right() and not self.is_sticky:
-                self.hide(event)
-
-                
-    def hide(self, event):
-        direction = self.is_sticky_to_right()
-        self.old_size = self.master.winfo_x(), self.master.winfo_y()
-        if direction == "right":
-            self.animate_move(self.master.winfo_screenwidth() - 2, self.master.winfo_y())
-        if direction == "left":
-            self.animate_move(2 - self.master.winfo_width(), self.master.winfo_y())
-        if direction == "top":
-            self.animate_move(self.master.winfo_x(), 2 - self.master.winfo_height())
-        self.is_sticky = True
-        self.show_nums = 0
-    def animate_move(self, x, y):
-        current_x, current_y = self.master.winfo_x(), self.master.winfo_y()
-        steps = 10  # 增加步数
-        dx = (x - current_x) / steps
-        dy = (y - current_y) / steps
-        for i in range(steps):
-            self.master.geometry(f"+{int(current_x + dx * i)}+{int(current_y + dy * i)}")
-            self.master.update_idletasks()
-            self.master.after(10)  # 设置每步之间的时间间隔，单位为毫秒
-        self.master.geometry(f"+{x}+{y}")
-
-    def is_sticky_to_right(self):
-
-        screen_width = self.master.winfo_screenwidth()
-        window_width = self.master.winfo_width()
-        window_x = self.master.winfo_x()
-        window_y = self.master.winfo_y()
-        self.direction = None
-        if window_x + window_width >= screen_width - 5:
-            self.direction = "right"
-        if window_x <= 5:
-            self.direction = "left"
-        if window_y <= 5:
-            self.direction = "top"
-        return self.direction
-
-class WebviewStickyWindow(StickyWindow):
-    """
-    在有webview时的贴边隐藏功能w
-    """
-    def __init__(self, master):
-        super().__init__(master)
-
-        self.show_check_funcs = []
-        self.level_check_funcs = []
-
-
-        # self.check_level()
-
+        # 延时函数的id
         self.after_id = None
 
-        self.before_flag = None
-
-        self.show_nums = 0
-        self.master.after(5000,self.init_show_num)
-
-        self.events = []
-        self._time = time.time()
-
-        self.reversal_time = time.time()
-
-    def init_show_num(self):
-        self.show_nums = 0
 
     def show(self, event):
-        self._time = time.time()
-        self.show_nums += 1
-        if self.show_nums == 1:
-            if self.old_size and self.is_sticky:
-                self.master.geometry(f"+{self.old_size[0]}+{self.old_size[1]}")
-                self.is_sticky = False
+        self.mouse_is_in = True
+        # 取消最近的隐藏延迟
+        if self.after_id:
+            self.master.root.after_cancel(self.after_id)
+            self.after_id = None
+
+        if self.old_size and self.is_sticky:
+            self.master.time_label.reset_default()
+            self.master.time_label.update_time()
+
+            self.master.action_label.reset_default()
+            self.master.geometry(self.old_size[0], self.old_size[1])
+            self.is_sticky = False
 
     def leave(self, event):
-        self._time = time.time()
+        self.mouse_is_in = False
+        direction, x, y = self.is_sticky_to_right()
+        # 检查窗口是否贴边
+        if direction and not self.is_sticky:
+            self.after_id = self.master.root.after(1000, self.hide)
 
-        if self.show_nums:
-            self.show_nums -= 1
-
-    def check_master_mouse_in(self,event):
-        for i in self.level_check_funcs:
-            flag = i(event)
-            if not flag:
-                return True
-        return False
-
-    def _level(self,event):
-        if self.check_master_mouse_in(event):
+    def hide(self):
+        if self.mouse_is_in:
             return
-        if time.time() - self._time <1:
-            return
+        
+        direction, x, y = self.is_sticky_to_right()
+        if direction == "right":
+            self.animate_move(x, y)
 
-        if self.show_nums == 0:
-            # 检查窗口是否贴边
-            if self.is_sticky_to_right() and not self.is_sticky:
-                self.hide(event)
+            self.is_sticky = True
 
+            self.master.time_label.direction = 1  # 纵向
+            self.master.time_label.place(x=13, y=0)
+            # self.master.time_label.update_time()
+        else:
+            self.is_sticky = False
 
-    def hide(self, event):
-        if self.check_master_mouse_in(event):
-            return
-        if time.time() - self._time <1:
-            return
+    def animate_move(self, x, y):
+        current_x, current_y = (
+            self.master.root.winfo_x(),
+            self.master.root.winfo_y(),
+        )
+        steps = 20  # 增加步数
+        dx = (x - current_x) / steps
+        dy = (y - current_y) / steps
+        self._move_step(0, steps, current_x, current_y, dx, dy, x, y)
 
-        return super().hide(event)
-    
-    def _hide(self):
-        return super().hide(None)
+    def _move_step(self, step, steps, current_x, current_y, dx, dy, target_x, target_y):
+        if step < steps:
+            new_x = int(current_x + dx * step)
+            new_y = int(current_y + dy * step)
+            self.master.geometry(new_x, new_y)
+            # self.master.root.update_idletasks()  # 立即更新GUI
+            self.master.root.after(
+                10,
+                self._move_step,
+                step + 1,
+                steps,
+                current_x,
+                current_y,
+                dx,
+                dy,
+                target_x,
+                target_y,
+            )
+        else:
+            self.master.geometry(target_x, target_y)
 
-    def reversal(self):
-        try:
-            if self.is_sticky:
-                self.show_nums = 0
-                self.show(None)
-            else:
-                super().hide(None)
-        except Exception as e:
-            WebLogger.info("reversal error:{}".format(e))
-            
-    def check_level(self):
-        try:
-            self._level(None)
-        except:
-            pass
-        self.after_id = self.master.after(1000,self.check_level)
-class WebLogger:
-    logger = None
+    def is_sticky_to_right(self):
+        # 屏幕宽度/高度
+        screen_width = self.master.root.winfo_screenwidth()
+        screen_height = self.master.root.winfo_screenheight()
 
-    @classmethod
-    def info(cls, msg, *args, **kwargs):
-        if not cls.logger:
-            cls.logger = setup_logger()
-        cls.logger.info(msg, *args, **kwargs)
+        # 父宽度/高度
+        father_width = self.master.root.winfo_width()
+        father_height = self.master.root.winfo_height()
 
+        # 宠物宽度/高度
+        action_width = self.master.action_label.winfo_width()
+        action_height = self.master.action_label.winfo_height()
+
+        # 父位置
+        father_x = self.master.root.winfo_x()
+        father_y = self.master.root.winfo_y()
+
+        # 宠物相对父位置
+        action_x = self.master.action_label.winfo_x()
+        action_y = self.master.action_label.winfo_y()
+
+        # 宠物相对屏幕位置
+        action_window_x = father_x + action_x
+        action_window_y = father_y + action_y
+
+        # 宠物最右侧相对屏幕位置
+        action_right_x = action_window_x + action_width
+        # 宠物最左侧相对屏幕位置
+        action_left_x = action_window_x
+        # 宠物最左侧相对屏幕位置
+        action_top_y = action_window_y
+
+        # 初始化坐标
+        x, y = father_x, father_y
+        self.direction = None
+
+        # 计算宠物最右侧距离屏幕最右侧的距离
+        distance_to_right = screen_width - action_right_x
+        # 计算宠物最左侧距离屏幕最左侧的距离
+        distance_to_left = action_left_x
+        # 计算宠物最上侧距离屏幕最上侧的距离
+        distance_to_top = action_top_y
+
+        # 宠物最左侧贴边屏幕最右侧的位置
+        edging_right = screen_width - action_x
+        # 宠物最右侧贴边屏幕最左侧的位置
+        edging_left = -action_x - action_width
+        # 宠物最下侧贴边屏幕最上侧的位置
+        # edging_top = -action_x - action_width
+
+        # 判断距离是否小于5
+        if distance_to_right < 5:
+            self.direction = "right"
+            # 屏幕宽度 - 宠物相对父位置（宠物左侧贴边）
+            x = edging_right - self.sticky_length
+            self.old_size = (
+                screen_width - action_x - action_width + 10,
+                y,
+            )
+        # elif distance_to_left <5:
+        #     self.direction = "left"
+        #     x = edging_left + self.sticky_length
+        # elif distance_to_top<5 :
+        #     self.direction = "top"
+
+        else:
+            self.old_size = None
+        return self.direction, x, y
