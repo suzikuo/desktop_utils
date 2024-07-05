@@ -2,7 +2,6 @@
 import json
 import os
 from pathlib import Path
-from kernel.message import show_message
 
 from log import MyLogger
 

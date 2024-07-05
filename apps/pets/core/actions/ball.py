@@ -1,7 +1,5 @@
 import os
 
-from PIL import Image, ImageTk
-
 from kernel.settings import IMG_DIR, config
 
 from ..base import BaseAction
@@ -32,13 +30,11 @@ class Ball(BaseAction):
         pass
 
     def init_images(self):
-        self.image = Image.open(os.path.join(IMG_DIR, "ball\\ball_new.png"))
+        from tkinter import PhotoImage
 
-        self.photo_images = []
-        for angle in range(0, 360):
-            rotated_image = self.image.rotate(angle)
-            photo_image = ImageTk.PhotoImage(rotated_image)
-            self.photo_images.append(photo_image)
+        self.image = PhotoImage(file=os.path.join(IMG_DIR, "ball\\ball_new.png"))
+
+        self.photo_images = [self.image]
 
         self.lens = len(self.photo_images)
 

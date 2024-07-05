@@ -1,6 +1,5 @@
 import subprocess
 
-import psutil
 
 from kernel.settings import config
 from log import MyLogger
@@ -11,6 +10,8 @@ class FrpUtils:
         pass
 
     def check_service(self, *args, **kwargs):
+        import psutil
+
         for proc in psutil.process_iter(["pid", "name"]):
             if proc.info["name"] == config.frpc.name:
                 return True

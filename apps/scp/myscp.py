@@ -1,15 +1,18 @@
 import json
 import os
 import queue
+import sys
 import threading
 import time
 import tkinter as tk
 import traceback
 from tkinter import filedialog
 
-import paramiko
 
-from kernel.settings import config
+from kernel.settings import MyConfig, config
+
+def get_ref_count(obj):
+    return sys.getrefcount(obj) - 1
 
 
 class Color:
@@ -22,20 +25,20 @@ class MessageOutPut:
     消息
     """
 
-    output_queue = queue.Queue()
+    def __init__(self) -> None:
+        self.output_queue = queue.Queue()
 
-    # 创建一个标志位，用于控制线程的运行状态
-    output_thread_running = True
+        # 创建一个标志位，用于控制线程的运行状态
+        self.output_thread_running = True
 
-    output_thread = None
+        self.output_thread = None
 
-    @classmethod
-    def process_output_queue(cls, main):
+    def process_output_queue(cls, output_text):
         text_color = {
-            Color.GREEN: main.output_text.tag_config(
+            Color.GREEN: output_text.tag_config(
                 Color.GREEN, foreground=Color.GREEN
             ),
-            Color.RED: main.output_text.tag_config(Color.RED, foreground=Color.RED),
+            Color.RED: output_text.tag_config(Color.RED, foreground=Color.RED),
         }
         while cls.output_thread_running:
             if not cls.output_queue.empty():
@@ -45,39 +48,35 @@ class MessageOutPut:
                 index = tk.END
                 if clear:
                     # 获取最后一行的索引
-                    last_line_index = main.output_text.index("end-1c linestart")
+                    last_line_index = output_text.index("end-1c linestart")
                     start_index = f"{str(int(last_line_index.split('.')[0])-1)}.0"
                     end_index = f"{str(int(last_line_index.split('.')[0]))}.0"
                     # 删除最后一行
-                    main.output_text.delete(start_index, end_index)
+                    output_text.delete(start_index, end_index)
                     index = start_index
                 if color in text_color:
-                    main.output_text.insert(index, str(message[0]) + "\n", color)
+                    output_text.insert(index, str(message[0]) + "\n", color)
                 else:
-                    main.output_text.insert(index, str(message[0]) + "\n")
-                main.output_text.see(tk.END)
+                    output_text.insert(index, str(message[0]) + "\n")
+                output_text.see(tk.END)
             time.sleep(0.01)
-
-    @classmethod
-    def start_output_thread(cls, main):
+        print("output_thread end")
+    def start_output_thread(cls, output_text):
         # 创建并启动输出线程
         cls.output_thread = threading.Thread(
-            target=cls.process_output_queue, args=(main,)
+            target=cls.process_output_queue, args=(output_text,)
         )
         cls.output_thread.daemon = True
         cls.output_thread.start()
 
-    @classmethod
     def stop_output_thread(cls):
         cls.output_thread_running = False
 
-    @classmethod
     def put(cls, message, color=None, clear=False):
         cls.output_queue.put([message, color, clear])
 
-    @classmethod
-    def get_insert_index(cls, main):
-        return main.output_text.index("end -2l linestart")
+    def get_insert_index(cls, output_text):
+        return output_text.index("end -2l linestart")
 
 
 class Main:
@@ -95,21 +94,30 @@ class Main:
         self.init_label()
 
         # 初始化消息体
-        self.message_class = MessageOutPut
-        self.message_class.start_output_thread(self)
+        self.message_class = MessageOutPut()
+        self.message_class.start_output_thread(self.output_text)
 
         # 初始化ssh配置文件
         self.load_ssh_connections()
 
         # 取消上传/下载
         self.cancelled = False
-
+    
         self.uploader = Upload(self)
 
         self.downloader = DowdLoad(self)
 
-    def __del__(self):
+
+        self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
+
+    def on_closing(self):
         self.message_class.stop_output_thread()
+        self.downloader.main = None
+        self.uploader.main = None
+        self.uploader = None
+        self.downloader = None
+        self.root.destroy()
+        self.root.quit()
 
     def init_label(self):
         """
@@ -174,38 +182,50 @@ class Main:
         # 设置行的调整权重，使其在界面拉伸时自动调整大小
         self.root.rowconfigure(2, weight=1)
 
-    def init_upload(self, upload_func):
-        """
-        初始化上传按钮
-        """
-        upload_button = tk.Button(self.root, text="上传", command=upload_func)
-        upload_button.grid(row=6, column=0, padx=5, pady=10)
+    # def init_upload(self, upload_func):
+    #     """
+    #     初始化上传按钮
+    #     """
+    #     upload_button = tk.Button(self.root, text="上传", command=upload_func)
+    #     upload_button.grid(row=6, column=0, padx=5, pady=10)
 
-    def init_download(self, download_func):
-        """
-        初始化下载按钮
-        """
-        download_button = tk.Button(self.root, text="下载", command=download_func)
-        download_button.grid(row=6, column=1, padx=5, pady=10)
+    # def init_download(self, download_func):
+    #     """
+    #     初始化下载按钮
+    #     """
+    #     download_button = tk.Button(self.root, text="下载", command=download_func)
+    #     download_button.grid(row=6, column=1, padx=5, pady=10)
 
     def load_ssh_connections(self):
         """
         初始化连接配置
         """
         try:
-            with open(self.conf, "r") as file:
-                self.ssh_connections = json.load(file)
+            with open(self.conf, "r",encoding="utf-8") as file:
+                # self.ssh_connections = json.load(file)
+                data = file.read()
+                self.ssh_connections = json.loads(MyConfig.format_data(data))
                 self.ssh_connections_listbox.delete(0, tk.END)
                 for name, connection in self.ssh_connections.items():
                     self.ssh_connections_listbox.insert(tk.END, name)
         except Exception as e:
             self.message_class.put(f"加载SSH连接出错：{str(e)}")
 
-    def run(self):
-        # 运行界面
-        self.root.mainloop()
-        # self.process_output_queue()
-        # self.root.after(100, process_output_queue, self)
+    def _run(self):
+        try:
+            # 运行界面
+            self.root.mainloop()
+            print("mainloop end")
+            # self.uploader = None
+            # self.downloader = None
+            # print(2222)
+            # import objgraph
+
+            # objgraph.show_refs([self])
+        except Exception as e:
+            print(e)
+
+
 
     def select_local_directory(self):
         """
@@ -263,6 +283,8 @@ class SftpConnect:
         """
         初始化sftp
         """
+        import paramiko
+
         username = host.split("@")[0]
         hostname = host.split("@")[1]
         transport = paramiko.Transport((hostname, 22))
@@ -278,10 +300,14 @@ class SftpConnect:
         return sftp, transport
 
 
+
 class Upload(SftpConnect):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.main.init_upload(self.upload_file)
+        # self.main.init_upload(self.upload_file)
+
+        upload_button = tk.Button(self.main.root, text="上传", command=self.upload_file)
+        upload_button.grid(row=6, column=0, padx=5, pady=10)
 
     def scp_upload_file(self, local_path, remote_path, sftp):
         """
@@ -403,6 +429,9 @@ class Upload(SftpConnect):
         """
         upload_thread = threading.Thread(target=self.upload_file_thread)
         upload_thread.start()
+        
+    # def close(self):
+    #     self.
 
 
 class DowdLoad(SftpConnect):
@@ -412,7 +441,13 @@ class DowdLoad(SftpConnect):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.main.init_download(self.download_file)
+        download_button = tk.Button(
+            self.main.root, text="下载", command=self.download_file
+        )
+        download_button.grid(row=6, column=1, padx=5, pady=10)
+
+    # def __del__(self):
+    #     self.main = None
 
     def scp_download_thread(
         self, remote_path, local_path, hostname, pem=None, password=None

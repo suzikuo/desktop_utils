@@ -1,5 +1,6 @@
 import json
 import os
+import subprocess
 
 from kernel.settings import config, MyConfig
 
@@ -28,3 +29,8 @@ class SshUtils:
             os.system(f" start cmd.exe /K {ssh}")
         except Exception as e:
             print(e)
+
+    def open_config(self, *args, **kwargs):
+        subprocess.Popen(
+            ["cmd", "/c", "start", "", f"{config.ssh.commands}"], shell=True
+        )

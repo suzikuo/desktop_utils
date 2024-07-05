@@ -1,5 +1,5 @@
 from apps.app import BaseApp
-from apps.pets.core.pet import BallPet, BiuPet, CatPet, LxhPet
+from apps.pets.core.pet import BallPet
 from kernel.events import StopEvents
 from log import MyLogger
 
@@ -11,9 +11,7 @@ class PetsApp(BaseApp):
 
     def run(self):
         try:
-            default = "ball"
-            pet_conf = {"cat": CatPet, "biu": BiuPet, "lxh": LxhPet,"ball":BallPet}
-            self.pet = pet_conf[default]()
+            self.pet = BallPet()
             StopEvents().add("Pet", self.pet.quit)
             self.pet.run()
         except Exception as e:

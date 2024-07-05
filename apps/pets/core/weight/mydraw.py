@@ -1,8 +1,8 @@
-import tkinter
+from tkinter import Toplevel, WORD, BOTH
 from .common import CustomTitleBar, SimpleMarkdownText
 
 
-class TextPopup(tkinter.Toplevel):
+class TextPopup(Toplevel):
     """
     一个置顶的小文本提示框弹窗
     """
@@ -17,9 +17,9 @@ class TextPopup(tkinter.Toplevel):
         self.attributes("-alpha", 0.8)  # 设置透明度为0.5，取值范围为0.0到1.0
         self.attributes("-toolwindow", True)
         self.title_bar = CustomTitleBar(self, title="消息提示")
-        self.text = SimpleMarkdownText(self, wrap=tkinter.WORD)
+        self.text = SimpleMarkdownText(self, wrap=WORD)
         self.text.hide_vertical_scrollbar()
-        self.text.pack(expand=True, fill=tkinter.BOTH)
+        self.text.pack(expand=True, fill=BOTH)
 
         self.set_size()
 

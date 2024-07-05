@@ -1,4 +1,4 @@
-from apps.myhttp.httpProcess import MyHttpProcess
+
 from kernel.common import is_port_in_use, kill_process_using_port
 from kernel.events import StopEvents
 from log import MyLogger
@@ -9,6 +9,7 @@ from singleton import singleton
 class MyHttpUtil:
     def __init__(self) -> None:
         self.http_instance = None
+        self.http = {}
 
     def check_service(self, port):
         if is_port_in_use(port):
@@ -16,18 +17,17 @@ class MyHttpUtil:
         return False
 
     def save_address(self, address):
-        from kernel.share_value import SharedDict
 
         if address:
-            SharedDict["HTTP"] = {"address": [address[0], address[1]]}
+            self.http = {"address": [address[0], address[1]]}
         else:
-            SharedDict["HTTP"] = {}
+            self.http = {}
 
     def start_service(self, address, directory,https=False):
-        from kernel.share_value import Lock, SharedDict
+        from apps.myhttp.httpProcess import MyHttpProcess
 
         if is_port_in_use(address[1]):
-            address = SharedDict["HTTP"].get("address", [])
+            address = self.http.get("address", [])
             if address:
                 return address
 
@@ -35,26 +35,23 @@ class MyHttpUtil:
             MyLogger.error("Start Http Errpr:" + error_message)
             raise Exception(error_message)
 
-        with Lock:
-            t = MyHttpProcess(address, directory,https)
-            t.start()
+        t = MyHttpProcess(address, directory,https)
+        t.start()
 
-            MyLogger.info(f"HTTP {address} Start!")
-            self.save_address(address)
+        MyLogger.info(f"HTTP {address} Start!")
+        self.save_address(address)
 
         StopEvents().add("MyHttpUtil", lambda: self._stop(address[1]))
 
         return address
 
     def stop_service(self, port=None, *args, **kwargs):
-        from kernel.share_value import Lock
 
         if port:
             self._stop(port)
         StopEvents().remove("MyHttpUtil")
 
-        with Lock:
-            self.save_address([])
+        self.save_address([])
 
         MyLogger.info("HTTP Shutdown!")
 

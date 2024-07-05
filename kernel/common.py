@@ -1,7 +1,6 @@
 import subprocess
 
 from kernel.settings import  config, main_config_file
-from log import MyLogger
 
 
 def open_config_file(*args, **kwargs):

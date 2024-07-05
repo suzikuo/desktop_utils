@@ -1,17 +1,15 @@
 import subprocess
 
-import psutil
-
 from apps.frp.utils import FrpUtils
 from apps.myhttp.utils import MyHttpUtil
 from apps.ssh.utils import SshUtils
 from kernel.common import open_config_file
 from kernel.events import StopEvents
 from kernel.settings import config
-
 from .base import BaseMenu, BasePetMaster
 from .log import PetLogger
 from .weight.mydraw import TextPopup
+from apps.other.zhiding import open_calculator
 
 
 class FrpMenu(BaseMenu):
@@ -41,6 +39,8 @@ class FrpMenu(BaseMenu):
         FrpUtils().open_config()
 
     def check_service(self, is_popup=True, **kwargs):
+        import psutil
+
         status = False
         for proc in psutil.process_iter(["pid", "name"]):
             if proc.info["name"] == config.frpc.name:
@@ -60,6 +60,7 @@ class SSHMenu(BaseMenu):
         data = SshUtils().load_data()
         for info in data:
             self.add_command(label=info["text"], command=self.ssh(info["details"]))
+        self.add_command(label="配置文件", command=self.open_config)
 
     def ssh(self, conf):
         def wrapper():
@@ -67,17 +68,25 @@ class SSHMenu(BaseMenu):
 
         return wrapper
 
+    def open_config(self):
+        SshUtils().open_config()
+
 
 class ScpMenu(BaseMenu):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
+        self.add_command(label="xftp", command=self.start_xftp)
         self.add_command(label="打开", command=self.start_service)
+
+    def start_xftp(self):
+        subprocess.Popen(["cmd", "/c", "start", "", "D:\\xftp\\Xftp.exe"], shell=True)
 
     def start_service(self):
         from apps.scp.myscp import Main
-
-        Main().run()
-
+        Main()._run()
+        import gc
+        gc.enable()
+        gc.collect()
 
 class LinkMenu(BaseMenu):
     def __init__(self, *args, **kwargs) -> None:
@@ -138,6 +147,8 @@ class HTTPMenu(BaseMenu):
         try:
             MyHttpUtil().stop_service(config.http.port)
             TextPopup(self.root, self.show_time).add_text("服务已停止")
+            # import gc
+            # gc.collect()
         except Exception as e:
             TextPopup(self.root, self.show_time).add_text(str(e))
 
@@ -153,6 +164,8 @@ class PetMenu(BaseMenu):
         self.add_cascade(label="我的地址", menu=LinkMenu(main=self))
 
         self.add_separator()
+        self.add_command(label="更改配置", command=self.open_config_file)
+        self.add_command(label="计算器", command=self.open_calc)
         self.add_command(label="Quit", command=self.close)
         PetLogger.info("Pet APP:Init menu success!")
 
@@ -174,6 +187,9 @@ class PetMenu(BaseMenu):
     def open_ssh_config_file(self, *args, **kwargs):
         self.unpost()
         subprocess.Popen(["cmd", "/c", "start", "", config.ssh.commands], shell=True)
+
+    def open_calc(self):
+        open_calculator()
 
     def close(self, *args, **kwargs):
         self.unpost()

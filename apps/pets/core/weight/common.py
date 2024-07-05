@@ -1,25 +1,19 @@
 import re
-import time
-import tkinter as tk
-import tkinter.font as tkfont
-import tkinter.scrolledtext as tkscroll
-from log import setup_logger
+from tkinter import Frame, X, TOP, BOTTOM, Y, LEFT, RIGHT, Label,Button
+from tkinter.font import nametofont, Font
+from tkinter.scrolledtext import ScrolledText
 
 
-class SimpleMarkdownText(tkscroll.ScrolledText):
-    """
-    Really basic Markdown display. Thanks to Bryan Oakley's RichText:
-    https://stackoverflow.com/a/63105641/79125
-    """
+class SimpleMarkdownText(ScrolledText):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        default_font = tkfont.nametofont(self.cget("font"))
+        default_font = nametofont(self.cget("font"))
 
         em = default_font.measure("m")
         default_size = default_font.cget("size")
-        bold_font = tkfont.Font(**default_font.configure())
-        italic_font = tkfont.Font(**default_font.configure())
+        bold_font = Font(**default_font.configure())
+        italic_font = Font(**default_font.configure())
         self.vbar.pack_forget()
         bold_font.configure(weight="bold")
         italic_font.configure(slant="italic")
@@ -35,7 +29,7 @@ class SimpleMarkdownText(tkscroll.ScrolledText):
 
         max_heading = 3
         for i in range(1, max_heading + 1):
-            header_font = tkfont.Font(**default_font.configure())
+            header_font = Font(**default_font.configure())
             header_font.configure(size=int(default_size * i + 3), weight="bold")
             self.tag_configure(
                 "#" * (max_heading - i), font=header_font, spacing3=default_size
@@ -116,7 +110,7 @@ class SimpleMarkdownText(tkscroll.ScrolledText):
             self.insert("end", "\n")
 
 
-class CustomTitleBar(tk.Frame):
+class CustomTitleBar(Frame):
     def __init__(self, master, title="Custom Title Bar", close_callback=None):
         super().__init__(master, bg="#333333")
         self.master = master
@@ -127,18 +121,18 @@ class CustomTitleBar(tk.Frame):
             bg="#333333",
             cursor="sb_v_double_arrow",
             height=2,
-            fill=tk.X,
-            side=tk.TOP,
+            fill=X,
+            side=TOP,
         )
-        self.title_label = tk.Label(self, text=title, bg="#333333", fg="white", padx=10)
-        self.title_label.pack(side=tk.LEFT)
+        self.title_label = Label(self, text=title, bg="#333333", fg="white", padx=10)
+        self.title_label.pack(side=LEFT)
 
-        self.close_button = tk.Button(
+        self.close_button = Button(
             self, text="X", bg="#333333", fg="white", bd=0, command=self.close_window
         )
-        self.close_button.pack(side=tk.RIGHT)
+        self.close_button.pack(side=RIGHT)
 
-        self.pack(fill=tk.X)
+        self.pack(fill=X)
 
         # 绑定鼠标事件
         self.bind("<ButtonPress-1>", self.start_drag)
@@ -150,24 +144,24 @@ class CustomTitleBar(tk.Frame):
             bg="#A52A2A",
             cursor="sb_v_double_arrow",
             height=2,
-            fill=tk.X,
-            side=tk.BOTTOM,
+            fill=X,
+            side=BOTTOM,
         )
         self.resize_frame_left = ResizableFrame(
             self.master,
             bg="#333333",
             cursor="sb_h_double_arrow",
             width=2,
-            fill=tk.Y,
-            side=tk.LEFT,
+            fill=Y,
+            side=LEFT,
         )
         self.resize_frame_right = ResizableFrame(
             self.master,
             bg="#333333",
             cursor="sb_h_double_arrow",
             width=2,
-            fill=tk.Y,
-            side=tk.RIGHT,
+            fill=Y,
+            side=RIGHT,
         )
 
     def close_window(self):
@@ -193,7 +187,7 @@ class CustomTitleBar(tk.Frame):
         self.master.geometry(f"+{x}+{y}")
 
 
-class CommonFrame(tk.Frame):
+class CommonFrame(Frame):
     def __init__(
         self,
         master,
@@ -210,7 +204,7 @@ class CommonFrame(tk.Frame):
         self.pack(fill=fill, side=side)
 
 
-class ResizableFrame(tk.Frame):
+class ResizableFrame(Frame):
     def __init__(
         self,
         master,
@@ -244,24 +238,24 @@ class ResizableFrame(tk.Frame):
         delta_x = 0
         delta_y = 0
         if self._resize_start_x is not None and self._resize_start_y is not None:
-            if self.side in [tk.LEFT, tk.RIGHT]:
+            if self.side in [LEFT, RIGHT]:
                 delta_x = event.x_root - self._resize_start_x
-            if self.side in [tk.TOP, tk.BOTTOM]:
+            if self.side in [TOP, BOTTOM]:
                 delta_y = event.y_root - self._resize_start_y
 
-            if self.side == tk.RIGHT:
+            if self.side == RIGHT:
                 self.master.geometry(
                     f"{self.master.winfo_width()+ delta_x}x{self.master.winfo_height()+ delta_y}"
                 )
-            if self.side == tk.LEFT:
+            if self.side == LEFT:
                 self.master.geometry(
                     f"{self.master.winfo_width()- delta_x}x{self.master.winfo_height()- delta_y}+{self.master.winfo_x() + delta_x}+{self.master.winfo_y() + delta_y}"
                 )
-            if self.side == tk.TOP:
+            if self.side == TOP:
                 self.master.geometry(
                     f"{self.master.winfo_width()- delta_x}x{self.master.winfo_height()- delta_y}+{self.master.winfo_x() + delta_x}+{self.master.winfo_y() + delta_y}"
                 )
-            if self.side == tk.BOTTOM:
+            if self.side == BOTTOM:
                 self.master.geometry(
                     f"{self.master.winfo_width()+ delta_x}x{self.master.winfo_height()+ delta_y}"
                 )
@@ -324,14 +318,25 @@ class ActionSticky:
             return
         
         direction, x, y = self.is_sticky_to_right()
-        if direction == "right":
+
+        if direction:
             self.animate_move(x, y)
 
             self.is_sticky = True
 
+        if direction == "right":
+
             self.master.time_label.direction = 1  # 纵向
             self.master.time_label.place(x=13, y=0)
             # self.master.time_label.update_time()
+        elif direction == "left":
+            self.master.time_label.direction = 1  # 纵向
+            self.master.time_label.place(
+                x=self.master.action_label.winfo_x()
+                + self.master.action_label.winfo_width(),
+                y=0,
+            )
+
         else:
             self.is_sticky = False
 
@@ -425,9 +430,13 @@ class ActionSticky:
                 screen_width - action_x - action_width + 10,
                 y,
             )
-        # elif distance_to_left <5:
-        #     self.direction = "left"
-        #     x = edging_left + self.sticky_length
+        elif distance_to_left <5:
+            self.direction = "left"
+            x = edging_left + self.sticky_length +1
+            self.old_size = (
+                -action_x,
+                y,
+            )
         # elif distance_to_top<5 :
         #     self.direction = "top"
 

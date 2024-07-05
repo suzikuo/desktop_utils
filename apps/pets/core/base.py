@@ -1,13 +1,13 @@
 import datetime
 import os
+import random
 import time
-import tkinter
+from tkinter import Tk, Label, PhotoImage, Menu
 from apps.pets.core.weight.common import ActionSticky
 
 
 from kernel.settings import IMG_DIR, config
 
-from .hitokoto import Hitokoto
 
 
 class BasePetMaster:
@@ -16,7 +16,7 @@ class BasePetMaster:
     """
 
     def __init__(self):
-        self.root = tkinter.Tk()  # create window
+        self.root = Tk()  # create window
         self.root.withdraw()
         self.delay = 200  # delay in ms
 
@@ -151,10 +151,10 @@ class BaseAction:
 
     def init_background(self):
         # 设置透明背景
-        self.background = tkinter.Label(self.root, bd=0, bg="black")
+        self.background = Label(self.root, bd=0, bg="black")
         self.background.place(x=0, y=0)  # 设置 action_label 的初始位置
         self.background.configure(
-            image=tkinter.PhotoImage(
+            image=PhotoImage(
                 file=os.path.join(IMG_DIR, "transparent_image.png"),
                 width=self.window_width,  # 设置宽度为250
                 height=self.window_height,  # 设置高度为250
@@ -170,7 +170,7 @@ class BaseAction:
     def init_text_label(self):
         self.hitokoto = None
         # 创建文本框
-        self.text_label = tkinter.Label(
+        self.text_label = Label(
             self.root,
             text="嗨嗨嗨~",
             bd=0,
@@ -181,11 +181,6 @@ class BaseAction:
         )
         self.text_label.place(x=0, y=30)  # 设置文本框的初始位置
 
-        if config.pet.start_hitokoto:
-            self.hitokoto = Hitokoto(self.text_label)
-            self.hitokoto.start()
-        else:
-            self.hitokoto = None
 
     def init_time_label(self):
         if config.pet.show_time:
@@ -267,7 +262,7 @@ class BaseAction:
         pass
 
 
-class BaseMenu(tkinter.Menu):
+class BaseMenu(Menu):
     """
     右键菜单
     """
@@ -291,7 +286,7 @@ class BaseMenu(tkinter.Menu):
         pass
 
 
-class ActionLabel(tkinter.Label):
+class ActionLabel(Label):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.x, self.y = None, None
@@ -306,14 +301,39 @@ class ActionLabel(tkinter.Label):
         self.place_configure(x=x, y=y, *args, **kwargs)
 
 
-class TimeLabel(tkinter.Label):
+class TimeLabel(Label):
     """
     时间类
     """
 
+    colors = [
+        "black",  # 黑色
+        "white",  # 白色
+        "red",  # 红色
+        "green",  # 绿色
+        "blue",  # 蓝色
+        "yellow",  # 黄色
+        "cyan",  # 青色
+        "magenta",  # 洋红色（品红色）
+        "orange",  # 橙色
+        "purple",  # 紫色
+        "pink",  # 粉红色
+        "brown",  # 棕色
+        "gray",  # 灰色
+    ]
+
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.direction = 0  # 0横向，1纵向
+        self.x ,self.y=None,None
+
+    # def place()
+    def place(self,x,y,**kw):
+        if self.x is None:
+            self.x = x
+        if self.y is None:
+            self.y = y
+        super().place(x=x,y=y,**kw)
 
     def start(self):
         self._after()
@@ -331,3 +351,6 @@ class TimeLabel(tkinter.Label):
 
     def reset_default(self):
         self.direction = 0
+
+        self.config(fg=random.choice(self.colors))
+        super().place(x = self.x,y=self.y)
